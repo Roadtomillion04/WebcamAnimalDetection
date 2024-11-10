@@ -1,0 +1,50 @@
+What I learned while creating the project
+
+1. Wrong Label had been set: On setting up bounding boxes for Elephant and Deer images in makesense.ai, As we seperatly labeled the Elephant and deer images, not together, both have been saved as class 0.
+Thus causing the model to learn both separate classes Elephant and deer as same class. Fixed it by running a python script changing the first value of 0 to 1 for deer in txt files.
+
+2. Lack of dataset: Fortunately, I got a labeled dataset for Elephant. But for deer what I did was downloaded youtube video related to deer, and extracted every single frame with a 1 second delay using openCV VideoCapture(). But unfortunately, Many images were not rendered properly, thus resulting in bad dataset.
+
+3. Thinking more object instance in every image results more accuracy:
+So, I've searched youtube videos with more deers and extracted the dataset.
+But that caused me fall to pitfall of poor labelling and thus resulting in 20% maximum accuracy in the end, making all efforts useless.
+
+4. Getting model accuracy of every frame in runtime:
+As yolov5 runs on terminal by calling python3 detect.py --necessary arguments,
+I don't know how to get the accuracy in script for messaging using twilio.
+With the code below, I can now successfully get live accuracy predictions 
+every frame.
+
+detector = torch.hub.load("yolov5", 
+    path= "trained weight path(best/last.pt)", 
+    model= "custom", 
+    source= "local")
+
+results = detector(image_frame)
+
+boxes, classes, scores = [], [], []
+
+for detection in results.xyxy[0]:
+    *bbox, confidence, label = detection
+    scores.append(confidence)    
+ 
+But detector() accepts only image frames not video, so fix that
+I've used openCV VideoCapture() and looped through each frame and got the 
+accuracy.
+
+5. Training on local GPU: Training on local GPU especially Nvidia requires
+CUDA latest version setup to train a model using pytorch.
+Here is the blog on this topic
+https://wandb.ai/onlineinference/YOLO/reports/YOLOv5-Object-Detection-on-Windows-Step-By-Step-Tutorial---VmlldzoxMDQwNzk4
+
+Make sure to install +cu enabled torch, torchvision, torchaudio
+Without these packages, the model does not use GPU.
+
+6. Pytorch and python latest version error: I've used first python310 and pytorch11 to train my model on local GPU, which gave "_free_weak_ref" error.
+Then I downgraded both pytorch and python versions to get it work.
+So, do make sure to do some research on package before using it. 
+
+7. Image processing: To train an object detection model, it is necessary to standardize the image, meaning resizing all images to lower resolution as possible depending upon the problem to reduce model computation time and as well as learning unwanted parameters from the image. But I didn't normalize my RGB image to a Grayscale, as color maybe important to define an animal. But using JPG image saves a bit of computational time compared to PNG images, as PNG has dedicated 8-bit of total 32-bit for transparency which is useless learning parameter for our model and consumes extra memory, whereas JPG does not support alpha channel so that there would be only 24-bit.
+
+8. Renaming file collisions: While trying to organize the image and label file, I've renamed them to numbers, so that after splitting I can once make sure visually everything is correct. First our images and labels were in six different folders, to join them in one folder I've appended all the images path using os.listdir() and moved them into single directory in train folder using shutil.move(). And the next thing is to rename and sort all the images and labels in the train directory. Renaming have caused collisions due to rookie mistakes. Then I used linspace() to eventually cover the 17% images and labels and moved using shutil.move().
+

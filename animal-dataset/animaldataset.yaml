@@ -1,0 +1,8 @@
+path: /content/drive/MyDrive/WebCamAnimalPrediction/animal-dataset
+train: 'images/train'
+val: 'images/val'
+ 
+# class names
+nc: 2
+
+names:  ['Tiger', 'Elephant']
